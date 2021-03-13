@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["all","All syncing strategies (optimistic, warp sync, all forks) grouped together."],["all_forks","All-forks header and body syncing."],["grandpa_warp_sync",""],["optimistic","Optimistic header and body syncing."],["para","Parachains and parathreads syncing."]]});

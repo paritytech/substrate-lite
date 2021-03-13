@@ -1,0 +1,145 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `full_sled` mod in crate `smoldot`."><meta name="keywords" content="rust, rustlang, rust-lang, full_sled"><title>smoldot::database::full_sled - Rust</title><link rel="stylesheet" type="text/css" href="../../../normalize.css"><link rel="stylesheet" type="text/css" href="../../../rustdoc.css" id="mainThemeStyle"><link rel="stylesheet" type="text/css" href="../../../light.css"  id="themeStyle"><link rel="stylesheet" type="text/css" href="../../../dark.css" disabled ><link rel="stylesheet" type="text/css" href="../../../ayu.css" disabled ><script id="default-settings"></script><script src="../../../storage.js"></script><noscript><link rel="stylesheet" href="../../../noscript.css"></noscript><link rel="icon" type="image/svg+xml" href="../../../favicon.svg">
+<link rel="alternate icon" type="image/png" href="../../../favicon-16x16.png">
+<link rel="alternate icon" type="image/png" href="../../../favicon-32x32.png"><style type="text/css">#crate-search{background-image:url("../../../down-arrow.svg");}</style></head><body class="rustdoc mod"><!--[if lte IE 8]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="sidebar-menu">&#9776;</div><a href='../../../smoldot/index.html'><div class='logo-container rust-logo'><img src='../../../rust-logo.png' alt='logo'></div></a><p class="location">Module full_sled</p><div class="sidebar-elems"><div class="block items"><ul><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li><li><a href="#functions">Functions</a></li></ul></div><p class="location"><a href="../../index.html">smoldot</a>::<wbr><a href="../index.html">database</a></p><script>window.sidebarCurrent = {name: "full_sled", ty: "mod", relpath: "../"};</script><script defer src="../sidebar-items.js"></script></div></nav><div class="theme-picker"><button id="theme-picker" aria-label="Pick another theme!" aria-haspopup="menu"><img src="../../../brush.svg" width="18" alt="Pick another theme!"></button><div id="theme-choices" role="menu"></div></div><script src="../../../theme.js"></script><nav class="sub"><form class="search-form"><div class="search-container"><div><select id="crate-search"><option value="All crates">All crates</option></select><input class="search-input" name="search" disabled autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"></div><button type="button" class="help-button">?</button>
+                <a id="settings-menu" href="../../../settings.html"><img src="../../../wheel.svg" width="18" alt="Change settings"></a></div></form></nav><section id="main" class="content"><h1 class="fqn"><span class="out-of-band"><span id="render-detail"><a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">[<span class="inner">&#x2212;</span>]</a></span><a class="srclink" href="../../../src/smoldot/database/full_sled.rs.html#18-1418" title="goto source code">[src]</a></span><span class="in-band">Module <a href="../../index.html">smoldot</a>::<wbr><a href="../index.html">database</a>::<wbr><a class="mod" href="">full_sled</a></span></h1><div class="docblock"><p>Filesystem-backed database containing all the information about a chain.</p>
+<p>This module handles the persistent storage of the chain on disk.</p>
+<h1 id="usage" class="section-header"><a href="#usage">Usage</a></h1>
+<p>Use the <a href="../../../smoldot/database/full_sled/fn.open.html" title="open()"><code>open()</code></a> function to create a new database or open an existing one. <a href="../../../smoldot/database/full_sled/fn.open.html" title="open()"><code>open()</code></a>
+returns a <a href="../../../smoldot/database/full_sled/enum.DatabaseOpen.html" title="DatabaseOpen"><code>DatabaseOpen</code></a> enum. This enum will contain either a <a href="../../../smoldot/database/full_sled/struct.SledFullDatabase.html" title="SledFullDatabase"><code>SledFullDatabase</code></a> object,
+representing an access to the database, or a <a href="../../../smoldot/database/full_sled/struct.DatabaseEmpty.html" title="DatabaseEmpty"><code>DatabaseEmpty</code></a> if the database didn't exist or
+is empty. If that is the case, use <a href="../../../smoldot/database/full_sled/struct.DatabaseEmpty.html#method.initialize" title="DatabaseEmpty::initialize"><code>DatabaseEmpty::initialize</code></a> in order to populate it and
+obtain a <a href="../../../smoldot/database/full_sled/struct.SledFullDatabase.html" title="SledFullDatabase"><code>SledFullDatabase</code></a>.</p>
+<p>Use <a href="../../../smoldot/database/full_sled/struct.SledFullDatabase.html#method.insert" title="SledFullDatabase::insert"><code>SledFullDatabase::insert</code></a> to insert a new block in the database. The block is assumed
+to have been successfully verified prior to insertion. An error is returned if this block is
+already in the database or isn't a descendant or ancestor of the latest finalized block.</p>
+<p>Use <a href="../../../smoldot/database/full_sled/struct.SledFullDatabase.html#method.set_finalized" title="SledFullDatabase::set_finalized"><code>SledFullDatabase::set_finalized</code></a> to mark a block already in the database as finalized.
+Any block that isn't an ancestor or descendant will be removed. Reverting finalization is
+not possible.</p>
+<p>Due to the database's schema, it is not possible to efficiently retrieve the storage items of
+blocks that are ancestors of the finalized block. When a block is finalized, the storage of
+its ancestors is lost, and the only way to reconstruct it is to execute all blocks starting
+from the genesis to the desired one.</p>
+<h1 id="about-errors-handling" class="section-header"><a href="#about-errors-handling">About errors handling</a></h1>
+<p>Most of the functions and methods in this module return a <code>Result</code> containing notably an
+<a href="../../../smoldot/database/full_sled/enum.AccessError.html" title="AccessError"><code>AccessError</code></a>. This kind of errors can happen if the operating system returns an error when
+accessing the file system, or if the database has been corrupted, for example by the user
+manually modifying it.</p>
+<p>There isn't much that can be done to properly handle an <a href="../../../smoldot/database/full_sled/enum.AccessError.html" title="AccessError"><code>AccessError</code></a>. The only reasonable
+solutions are either to stop the program, or to delete the entire database and recreate it.</p>
+<h1 id="schema" class="section-header"><a href="#schema">Schema</a></h1>
+<p>Each section below corresponds to a &quot;tree&quot; in the sled database.</p>
+<h2 id="meta" class="section-header"><a href="#meta">meta</a></h2>
+<p>Contains all the meta-information about the content.</p>
+<p>Keys in that tree are:</p>
+<ul>
+<li>
+<p><code>best</code>: Hash of the best block.</p>
+</li>
+<li>
+<p><code>finalized</code>: Height of the finalized block, as a 64bits big endian number.</p>
+</li>
+<li>
+<p><code>grandpa_authorities_set_id</code>: A 64bits big endian number representing the id of the
+authorities set that must finalize the block right after the finalized block. The value is
+0 at the genesis block, and increased by 1 at every authorities change. Missing if and only
+if the chain doesn't use Grandpa.</p>
+</li>
+<li>
+<p><code>grandpa_triggered_authorities</code>: List of public keys and weights of the GrandPa
+authorities that must finalize the children of the finalized block. Consists in 40bytes
+values concatenated together, each value being a 32bytes ed25519 public key and a 8bytes
+little endian weight. Missing if and only if the chain doesn't use Grandpa.</p>
+</li>
+<li>
+<p><code>grandpa_scheduled_target</code>: A 64bits big endian number representing the block where the
+authorities found in <code>grandpa_scheduled_authorities</code> will be triggered. Blocks whose height
+is strictly higher than this value must be finalized using the new set of authorities. This
+authority change must have been scheduled in or before the finalized block. Missing if no
+change is scheduled or if the chain doesn't use Grandpa.</p>
+</li>
+<li>
+<p><code>grandpa_scheduled_authorities</code>: List of public keys and weights of the GrandPa
+authorities that will be triggered at the block found in <code>grandpa_scheduled_target</code>.
+Consists in 40bytes values concatenated together, each value being a 32bytes ed25519
+public key and a 8bytes little endian weight. Missing if no change is scheduled or if the
+chain doesn't use Grandpa.</p>
+</li>
+<li>
+<p><code>aura_slot_duration</code>: A 64bits big endian number indicating the duration of an Aura
+slot. Missing if and only if the chain doesn't use Aura.</p>
+</li>
+<li>
+<p><code>aura_finalized_authorities</code>: List of public keys of the Aura authorities that must
+author the children of the finalized block. Consists in 32bytes values concatenated
+together. Missing if and only if the chain doesn't use Aura.</p>
+</li>
+<li>
+<p><code>babe_slots_per_epoch</code>: A 64bits big endian number indicating the number of slots per
+Babe epoch. Missing if and only if the chain doesn't use Babe.</p>
+</li>
+<li>
+<p><code>babe_finalized_epoch</code>: SCALE encoding of a structure that contains the information
+about the Babe epoch used for the finalized block. Missing if and only if the finalized
+block is block #0 or the chain doesn't use Babe.</p>
+</li>
+<li>
+<p><code>babe_finalized_next_epoch</code>: SCALE encoding of a structure that contains the information
+about the Babe epoch that follows the one described by <code>babe_finalized_epoch</code>. If the
+finalized block is block #0, then this contains information about epoch #0. Missing if and
+only if the chain doesn't use Babe.</p>
+</li>
+</ul>
+<h2 id="block_hashes_by_number" class="section-header"><a href="#block_hashes_by_number">block_hashes_by_number</a></h2>
+<p>For each possible block number, stores a list of block hashes having that number.</p>
+<p>If the key is inferior or equal to the value in <code>finalized</code>, guaranteed to only contain on
+block.</p>
+<p>Keys in that tree are 64-bits-big-endian block numbers, and values are a concatenation of
+32-bytes block hashes (without any encoding). If the value is for example 96 bytes long,
+that means there are 3 blocks in the database with that block number.</p>
+<p>Never contains any empty value.</p>
+<h2 id="block_headers" class="section-header"><a href="#block_headers">block_headers</a></h2>
+<p>Contains an entry for every known block that is an ancestor or descendant of the finalized
+block.
+When the finalized block is updated, entries that aren't ancestors or descendants of the new
+finalized block are automatically purged.</p>
+<p>Keys are block hashes, and values are SCALE-encoded block headers.</p>
+<h2 id="block_bodies" class="section-header"><a href="#block_bodies">block_bodies</a></h2>
+<p>Entries are the same as for <code>block_headers_tree</code>.</p>
+<p>Keys are block hashes, and values are SCALE-encoded <code>Vec</code>s containing the extrinsics. Each
+extrinsic is itself a SCALE-encoded <code>Vec&lt;u8&gt;</code>.</p>
+<h2 id="block_justifications" class="section-header"><a href="#block_justifications">block_justifications</a></h2>
+<p>Entries are a subset of the ones of <code>block_headers_tree</code>.
+Not all blocks have a justification.
+Only finalized blocks have a justification.</p>
+<p>Keys are block hashes, and values are SCALE-encoded <code>Vec</code>s containing the justification.</p>
+<h2 id="storage_top_trie" class="section-header"><a href="#storage_top_trie">storage_top_trie</a></h2>
+<p>Contains the key-value storage at the finalized block.</p>
+<p>Keys are storage keys, and values are storage values.</p>
+<h2 id="non_finalized_changes_keys" class="section-header"><a href="#non_finalized_changes_keys">non_finalized_changes_keys</a></h2>
+<p>For each hash of non-finalized block, contains the list of keys in the storage that this
+block modifies.</p>
+<p>Keys are a 32 bytes block hash. Values are a list of SCALE-encoded <code>Vec&lt;u8&gt;</code> concatenated
+together. In other words, each value is a length (SCALE-compact-encoded), a key of that
+length, a length, a key of that length, and so on.</p>
+<h2 id="non_finalized_changes" class="section-header"><a href="#non_finalized_changes">non_finalized_changes</a></h2>
+<p>For each element in <code>non_finalized_changes_keys_tree</code>, contains the new value for this
+storage modification. If an entry is found in <code>non_finalized_changes_keys_tree</code> and not in
+<code>non_finalized_changes_tree</code>, that means that the storage entry must be removed.</p>
+<p>Keys are a 32 bytes block hash followed with a storage key.</p>
+</div><h2 id="structs" class="section-header"><a href="#structs">Structs</a></h2>
+<table><tr class="module-item"><td><a class="struct" href="struct.Config.html" title="smoldot::database::full_sled::Config struct">Config</a></td><td class="docblock-short"><p>Configuration for the database.</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.DatabaseEmpty.html" title="smoldot::database::full_sled::DatabaseEmpty struct">DatabaseEmpty</a></td><td class="docblock-short"><p>An open database. Holds file descriptors.</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.SledError.html" title="smoldot::database::full_sled::SledError struct">SledError</a></td><td class="docblock-short"><p>Low-level database error, such as an error while accessing the file system.</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.SledFullDatabase.html" title="smoldot::database::full_sled::SledFullDatabase struct">SledFullDatabase</a></td><td class="docblock-short"><p>An open database. Holds file descriptors.</p>
+</td></tr><tr class="module-item"><td><a class="struct" href="struct.VarLenBytes.html" title="smoldot::database::full_sled::VarLenBytes struct">VarLenBytes</a></td><td class="docblock-short"><p>Bytes in the database.</p>
+</td></tr></table><h2 id="enums" class="section-header"><a href="#enums">Enums</a></h2>
+<table><tr class="module-item"><td><a class="enum" href="enum.AccessError.html" title="smoldot::database::full_sled::AccessError enum">AccessError</a></td><td class="docblock-short"><p>Error while accessing some information.</p>
+</td></tr><tr class="module-item"><td><a class="enum" href="enum.ConfigTy.html" title="smoldot::database::full_sled::ConfigTy enum">ConfigTy</a></td><td class="docblock-short"><p>Type of database.</p>
+</td></tr><tr class="module-item"><td><a class="enum" href="enum.CorruptedError.html" title="smoldot::database::full_sled::CorruptedError enum">CorruptedError</a></td><td class="docblock-short"><p>Error in the content of the database.</p>
+</td></tr><tr class="module-item"><td><a class="enum" href="enum.DatabaseOpen.html" title="smoldot::database::full_sled::DatabaseOpen enum">DatabaseOpen</a></td><td class="docblock-short"><p>Either existing database or database prototype.</p>
+</td></tr><tr class="module-item"><td><a class="enum" href="enum.FinalizedAccessError.html" title="smoldot::database::full_sled::FinalizedAccessError enum">FinalizedAccessError</a></td><td class="docblock-short"><p>Error while accessing the storage of the finalized block.</p>
+</td></tr><tr class="module-item"><td><a class="enum" href="enum.InsertError.html" title="smoldot::database::full_sled::InsertError enum">InsertError</a></td><td class="docblock-short"><p>Error while calling <a href="../../../smoldot/database/full_sled/struct.SledFullDatabase.html#method.insert" title="SledFullDatabase::insert"><code>SledFullDatabase::insert</code></a>.</p>
+</td></tr><tr class="module-item"><td><a class="enum" href="enum.SetFinalizedError.html" title="smoldot::database::full_sled::SetFinalizedError enum">SetFinalizedError</a></td><td class="docblock-short"><p>Error while calling <a href="../../../smoldot/database/full_sled/struct.SledFullDatabase.html#method.set_finalized" title="SledFullDatabase::set_finalized"><code>SledFullDatabase::set_finalized</code></a>.</p>
+</td></tr></table><h2 id="functions" class="section-header"><a href="#functions">Functions</a></h2>
+<table><tr class="module-item"><td><a class="fn" href="fn.open.html" title="smoldot::database::full_sled::open fn">open</a></td><td class="docblock-short"><p>Opens the database using the given <a href="../../../smoldot/database/full_sled/struct.Config.html" title="Config"><code>Config</code></a>.</p>
+</td></tr></table></section><section id="search" class="content hidden"></section><section class="footer"></section><script>window.rootPath = "../../../";window.currentCrate = "smoldot";</script><script src="../../../main.js"></script><script defer src="../../../search-index.js"></script></body></html>

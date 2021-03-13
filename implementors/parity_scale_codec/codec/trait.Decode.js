@@ -1,0 +1,3 @@
+(function() {var implementors = {};
+implementors["smoldot"] = [{"text":"impl Decode for BabeNextConfig","synthetic":false,"types":[]},{"text":"impl Decode for BabeAllowedSlots","synthetic":false,"types":[]},{"text":"impl Decode for ChangesTrieSignal","synthetic":false,"types":[]},{"text":"impl Decode for ChangesTrieConfiguration","synthetic":false,"types":[]}];
+if (window.register_implementors) {window.register_implementors(implementors);} else {window.pending_implementors = implementors;}})()
